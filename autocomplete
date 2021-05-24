@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Place Autocomplete</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUTdoR3WNzFuZ8OG4jF4c4EPmnkvPPaDE&callback=initMap&libraries=places&v=weekly"
+      defer
+    ></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style type="text/css">
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100%;
+      }
+
+      /* Optional: Makes the sample page fill the window. */
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      #description {
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+      }
+
+      #infowindow-content .title {
+        font-weight: bold;
+      }
+
+      #infowindow-content {
+        display: none;
+      }
+
+      #map #infowindow-content {
+        display: inline;
+      }
+
+      .pac-card {
+        margin: 10px 10px 0 0;
+        border-radius: 2px 0 0 2px;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        outline: none;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        background-color: #fff;
+        font-family: Roboto;
+      }
+
+      #pac-container {
+        padding-bottom: 12px;
+        margin-right: 12px;
+      }
+
+      .pac-controls {
+        display: inline-block;
+        padding: 5px 11px;
+      }
+
+      .pac-controls label {
+        font-family: Roboto;
+        font-size: 13px;
+        font-weight: 300;
+      }
+
+      #pac-input {
+        background-color: #fff;
+        font-family: Roboto;
+        font-size: 15px;
+        font-weight: 300;
+        margin-left: 12px;
+        padding: 0 11px 0 13px;
+        text-overflow: ellipsis;
+        width: 400px;
+      }
+
+      #pac-input:focus {
+        border-color: #4d90fe;
+      }
+
+      #title {
+        color: #fff;
+        background-color: #4d90fe;
+        font-size: 25px;
+        font-weight: 500;
+        padding: 6px 12px;
+      }
+    </style>
+    <script>
+      var  geocoder = '';
+      var map = '';
+      // This example requires the Places library. Include the libraries=places
+      // parameter when you first load the API. For example:
+      // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places">
+      function initMap() {
+        const myLatLng = { lat: 40.439077355854494, lng: -3.716280302777911 };
+        map = new google.maps.Map(document.getElementById("map"), {
+          center: myLatLng,
+          zoom: 13,
+        });
+        new google.maps.Marker({
+              map: map,
+              position: myLatLng,
+            });
+        const card = document.getElementById("pac-card");
+        const input = document.getElementById("pac-input");
+        map.controls[google.maps.ControlPosition.TOP_RIGHT].push(card);
+        const autocomplete = new google.maps.places.Autocomplete(input);
+        autocomplete.setComponentRestrictions({
+          country: ["es"],
+        });
+        // Bind the map's bounds (viewport) property to the autocomplete object,
+        // so that the autocomplete requests use the current map bounds for the
+        // bounds option in the request.
+        autocomplete.bindTo("bounds", map);
+        // Set the data fields to return when the user selects a place.
+        autocomplete.setFields([
+          "address_components",
+          "geometry",
+          "icon",
+          "name",
+        ]);
+        const infowindow = new google.maps.InfoWindow();
+        const infowindowContent = document.getElementById("infowindow-content");
+        infowindow.setContent(infowindowContent);
+        const marker = new google.maps.Marker({
+          map,
+          anchorPoint: new google.maps.Point(0, -29),
+        });
+        autocomplete.addListener("place_changed", () => {
+          infowindow.close();
+          marker.setVisible(false);
+          const place = autocomplete.getPlace();
+
+          if (!place.geometry) {
+            // User entered the name of a Place that was not suggested and
+            // pressed the Enter key, or the Place Details request failed.
+            window.alert(
+              "No details available for input: '" + place.name + "'"
+            );
+            return;
+          }
+
+          geocoder = new google.maps.Geocoder();
+
+
+          let address = "";
+
+          if (place.address_components) {
+            address = [
+              (place.address_components[0] &&
+                place.address_components[0].short_name) ||
+                "",
+              (place.address_components[1] &&
+                place.address_components[1].short_name) ||
+                "",
+              (place.address_components[2] &&
+                place.address_components[2].short_name) ||
+                "",
+            ].join(" ");
+          }
+          infowindowContent.children["place-icon"].src = place.icon;
+          infowindowContent.children["place-name"].textContent = place.name;
+          infowindowContent.children["place-address"].textContent = address;
+          infowindow.open(map, marker);
+        });
+      }
+
+     
+        
+
+        $(document).delegate('#submit','click',function(){
+           geocodeAddress(geocoder, map);
+        });
+
+
+      var aa = ['28003','28015','28010'];
+
+      var i=0;
+
+      function geocodeAddress(geocoder, resultsMap) {
+        const address = document.getElementById("pac-input").value;
+        geocoder.geocode({ address: address, componentRestrictions: { country: "ES",postalCode: aa[i] } }, (results, status) => {
+         // console.log(status);
+          if (status === "OK") {
+            resultsMap.setCenter(results[0].geometry.location);
+            new google.maps.Marker({
+              map: resultsMap,
+              position: results[0].geometry.location,
+            });
+            console.log(results);
+            i = 0;
+          } else {
+              // console.log("times: "+i);
+          // geocodeAddress()
+              if(i == 2){
+                  alert("Geocode was not successful for the following reason: " + status);
+                  i= 0;
+                  
+              }else{
+                  geocodeAddress(geocoder, resultsMap);
+                  i++;  
+              }
+          }
+        });
+        console.log("At the end "+i);
+      }
+    </script>
+  </head>
+  <body>
+    <div id="floating-panel">
+      <input id="pac-input" type="textbox" placeholder="Enter a location" />
+      <input id="submit" type="button" value="Geocode" />
+    </div>
+    <div id="map"></div>
+    <div id="infowindow-content">
+      <img src="" width="16" height="16" id="place-icon" />
+      <span id="place-name" class="title"></span><br />
+      <span id="place-address"></span>
+    </div>
+  </body>
+</html>
